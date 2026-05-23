@@ -2891,6 +2891,22 @@ function mostrarLockDemo() {
 }
 
 function openBook(bookId) {
+  const book = BOOKS.find(b=>b.id===bookId);
+  if (!book) return;
+
+  if (book.__external && book.chapters.length === 0) {
+    const script = document.createElement('script');
+    script.src = book.__external;
+    script.onload = () => { _doOpenBook(bookId); };
+    script.onerror = () => { alert('Não foi possível carregar o livro.'); };
+    document.head.appendChild(script);
+    return;
+  }
+
+  _doOpenBook(bookId);
+}
+
+function _doOpenBook(bookId) {
   currentBook = BOOKS.find(b=>b.id===bookId);
   currentChapterIndex = 0;
   glossaryHighlighted.clear();
