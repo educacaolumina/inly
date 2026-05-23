@@ -321,7 +321,7 @@
       {
         title: "Chapter 10 · The Mystery Remains",
         vocabKeys: ["growl","hammer","mystery"],
-        locked: true,
+        
         content: `<div class="chapter-number">Chapter 10</div>
 <h1>The Mystery Remains</h1>
 <div class="chapter-divider"></div>
