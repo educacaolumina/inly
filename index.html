@@ -2777,7 +2777,7 @@ const glossaryHighlighted = new Set();
 
 function getNotebookVerbs(chIdx) {
   // For Marina book (id=2), verbs are already highlighted in the HTML content — skip auto-highlight
-  if (currentBook && currentBook.id === 2 || currentBook.id === 3) return new Set();
+  if (currentBook && currentBook.id === 2 || currentBook.id === 3 || currentBook.id === 4) return new Set();
   const nb = CHAPTER_NOTEBOOKS[chIdx];
   if (!nb) return new Set();
   return new Set([...nb.irregular, ...nb.regular].map(v => v.toLowerCase().replace('/','').split('/')[0]));
@@ -3049,13 +3049,13 @@ function renderChapterContent(ch, imgHtml, chIdx) {
   // Split content into paragraphs and inject images inline
   const baseHtml = renderWithVocab(ch.content);
   // Marina book (id=2) has no images
-  const pages = (currentBook && currentBook.id === 2 || currentBook.id === 3) ? [] : (CHAPTER_PAGES[String(chIdx)] || []);
+  const pages = (currentBook && currentBook.id === 2 || currentBook.id === 3 || currentBook.id === 4) ? [] : (CHAPTER_PAGES[String(chIdx)] || []);
   const placement = IMG_PLACEMENT[String(chIdx)] || {};
 
   if (pages.length === 0) {
     // No images for this chapter (ToC)
     document.getElementById('reader-content').innerHTML = baseHtml;
-    if (currentBook && currentBook.id === 2 || currentBook.id === 3) deduplicateVerbHighlights();
+    if (currentBook && currentBook.id === 2 || currentBook.id === 3 || currentBook.id === 4) deduplicateVerbHighlights();
     return;
   }
 
@@ -3091,7 +3091,7 @@ function renderChapterContent(ch, imgHtml, chIdx) {
   }
 
   document.getElementById('reader-content').innerHTML = result;
-  if (currentBook && currentBook.id === 2 || currentBook.id === 3) deduplicateVerbHighlights();
+  if (currentBook && currentBook.id === 2 || currentBook.id === 3 || currentBook.id === 4) deduplicateVerbHighlights();
 }
 
 function buildBannerImage(page) {
