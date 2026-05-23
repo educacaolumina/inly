@@ -1766,7 +1766,7 @@ const DEMO_MAX_CHAPTERS = 2; // índice 0 = sumário, índice 1 = Chapter 1
 const BOOKS = [
   {
     id:1, title:"The Locked Room Riddle", subtitle:"Bridges 1 · Elias Thorne #1",
-    level:"bridges", color1:"#2A3F5E", color2:"#0E1A2E", emoji:"🔍", progress:0,
+    level:"bridges", color1:"#2A3F5E", color2:"#0E1A2E", emoji:"🔍", progress:0, hasLock:true,
     coverSvg:`<svg viewBox="0 0 300 400" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block">
   <defs>
     <radialGradient id="fog" cx="55%" cy="38%" r="55%"><stop offset="0%" stop-color="#8BAAC8" stop-opacity=".18"/><stop offset="100%" stop-color="#0A1525" stop-opacity="0"/></radialGradient>
@@ -2963,7 +2963,7 @@ function renderChapter() {
   const imgHtml = ''; // images are all inline now
 
   // ── Último capítulo — lógica de lock ──
-  if (isLast && ch.locked && currentBook.id !== 4) {
+  if (isLast && ch.locked && currentBook.hasLock) {
     const allRead = allPreviousRead(bookId, currentBook.chapters.length);
 
     if (!allRead) {
@@ -3140,7 +3140,7 @@ function renderSidebar() {
     pillsEl.innerHTML = chapters.map((ch, i) => {
       const isActive = i === chIdx;
       const isRead = isChapterRead(bookId, i);
-      const isLockedPill = i === chapters.length - 1 && ch.locked;
+      const isLockedPill = i === chapters.length - 1 && ch.locked && currentBook.hasLock;
       let cls = 'sb-chapter-pill';
       if (isActive) cls += ' active';
       else if (isRead) cls += ' read';
