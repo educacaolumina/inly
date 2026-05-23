@@ -373,8 +373,11 @@
   // ── Registrar no app ────────────────────────────────────
   if (typeof BOOKS !== 'undefined') {
     // Evita duplicata se o script for carregado mais de uma vez
-    if (!BOOKS.find(b => b.id === 4)) {
+        const idx = BOOKS.findIndex(b => b.id === 4);
+    if (idx === -1) {
       BOOKS.push(book4);
+    } else {
+      BOOKS[idx] = book4;
     }
   }
 
