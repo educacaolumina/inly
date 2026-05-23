@@ -2963,20 +2963,22 @@ function renderChapter() {
   const imgHtml = ''; // images are all inline now
 
   // ── Último capítulo — lógica de lock ──
-  if (isLast && ch.locked) {
+  if (isLast && ch.locked && currentBook.id !== 4) {
     const allRead = allPreviousRead(bookId, currentBook.chapters.length);
 
     if (!allRead) {
       // Mostra quais capítulos faltam
       const missing = [];
       for (let i = 1; i <= currentBook.chapters.length - 2; i++) {
-        if (!isChapterRead(bookId, i)) missing.push(currentBook.chapters[i].title.replace(/Chapter \d+ · /, ''));
+        if (!isChapterRead(bookId, i)) missing.push(currentBook.chapters[i].title.replace(/Chapter \d+[\s·:]+/, ''));
       }
+      const lockMsgMissing = currentBook.lock_desc_missing || 'You need to read all chapters before the final reveal. Still missing:';
+      const lockTitleMissing = currentBook.lock_title_missing || 'Not so fast!';
       document.getElementById('reader-content').innerHTML = imgHtml + `
         <div class="locked-screen">
           <div class="lock-icon">📖</div>
-          <div class="lock-title">Not so fast, detective!</div>
-          <div class="lock-desc">You need to read all chapters before the final reveal. Still missing:</div>
+          <div class="lock-title">${lockTitleMissing}</div>
+          <div class="lock-desc">${lockMsgMissing}</div>
           <div class="lock-missing">${missing.map(t => `<strong>${t}</strong>`).join('<br>')}</div>
         </div>`;
     } else {
@@ -2990,12 +2992,14 @@ function renderChapter() {
           unlockProg[`${bookId}_unlock`] = now + 24 * 60 * 60 * 1000;
           localStorage.setItem(STORAGE_KEY_UNLOCK, JSON.stringify(unlockProg));
         }
+        const lockTitle = currentBook.lock_title_wait || ch.title;
+        const lockDesc = currentBook.lock_desc_wait || 'This chapter will unlock after you\'ve had time to reflect on the story. See you in a bit!';
         // Mostra tela de espera com countdown
         document.getElementById('reader-content').innerHTML = imgHtml + `
           <div class="locked-screen">
             <div class="lock-icon">🔒</div>
-            <div class="lock-title">Chapter 8 · How He Did It</div>
-            <div class="lock-desc">This chapter will unlock after you've had time to reflect on the story. Try to solve how he did it! See you in a bit!</div>
+            <div class="lock-title">${lockTitle}</div>
+            <div class="lock-desc">${lockDesc}</div>
             <div class="lock-countdown" id="lock-countdown">--:--:--</div>
             <div class="lock-countdown-label">hours · minutes · seconds</div>
           </div>`;
@@ -3158,8 +3162,9 @@ function renderSidebar() {
   // Notebook — supports both Thorne (irregular/regular) and Marina (simple_present/present_continuous)
   const isMarinab1 = currentBook && currentBook.id === 2;
   const isMarinab2 = currentBook && currentBook.id === 3;
+  const isSound = currentBook && currentBook.id === 4;
   const isMarina = isMarinab1 || isMarinab2;
-  const notebook = isMarinab2 ? CHAPTER_NOTEBOOKS_MARINA_B2[chIdx] : (isMarinab1 ? CHAPTER_NOTEBOOKS_MARINA[chIdx] : CHAPTER_NOTEBOOKS[chIdx]);
+  const notebook = isSound ? null : (isMarinab2 ? CHAPTER_NOTEBOOKS_MARINA_B2[chIdx] : (isMarinab1 ? CHAPTER_NOTEBOOKS_MARINA[chIdx] : CHAPTER_NOTEBOOKS[chIdx]));
   const nbSection = document.getElementById('sb-notebook-section');
   const nbBox = document.getElementById('sb-notebook-box');
   const nbLabel = document.getElementById('sb-notebook-label');
