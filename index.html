@@ -6005,7 +6005,32 @@ async function fazerLoginAluno() {
     if (resAluno.ok) {
       const rows = await resAluno.json();
       if (rows && rows.length > 0) {
-        alunoLogado = rows[0];
+        const aluno = rows[0];
+
+        // ── VERIFICAR BLOQUEIO ──
+        if (aluno.ativo === false) {
+          errEl.innerHTML = '🔴 Acesso suspenso.<br><span style="font-size:13px;opacity:0.7">Entre em contato com a escola para reativar.</span>';
+          errEl.classList.add('visible');
+          btn.disabled = false;
+          btn.textContent = 'Entrar';
+          return;
+        }
+
+        // ── REGISTRAR IP ──
+        try {
+          const ipRes = await fetch('https://api.ipify.org?format=json');
+          const { ip } = await ipRes.json();
+          const ipPatch = {};
+          if (aluno.ultimo_ip && aluno.ultimo_ip !== ip) ipPatch.ip_anterior = aluno.ultimo_ip;
+          ipPatch.ultimo_ip = ip;
+          await fetch(`${SB_URL}/rest/v1/synaptix_alunos?id=eq.${aluno.id}`, {
+            method: 'PATCH',
+            headers: { ...hdrs, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+            body: JSON.stringify(ipPatch)
+          });
+        } catch(e) { console.warn('IP não registrado:', e); }
+
+        alunoLogado = aluno;
         try { localStorage.setItem('inly_aluno', JSON.stringify(alunoLogado)); } catch {}
         btn.disabled = false;
         btn.textContent = 'Entrar';
@@ -6048,16 +6073,64 @@ function fazerLogoutAluno() {
 // INIT
 // ══════════════════════════════════════════════════════
 // Verificar sessão salva
-(function() {
+(async function() {
   try {
     const saved = localStorage.getItem('inly_aluno');
-    if (saved) {
-      alunoLogado = JSON.parse(saved);
+    if (!saved) { mostrarLogin(); return; }
+    const savedAluno = JSON.parse(saved);
+    // Se for usuário do Kdemi (não tem codigo_acesso de synaptix), restaura direto
+    if (!savedAluno.axiora_aluno_id && savedAluno.perfil) {
+      alunoLogado = savedAluno;
       mostrarApp();
       return;
     }
-  } catch {}
-  mostrarLogin();
+    // Revalidar no Supabase — checa bloqueio
+    const hdrs = { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` };
+    const res = await fetch(
+      `${SB_URL}/rest/v1/synaptix_alunos?codigo_acesso=eq.${encodeURIComponent(savedAluno.codigo_acesso)}&limit=1`,
+      { headers: hdrs }
+    );
+    if (!res.ok) { alunoLogado = savedAluno; mostrarApp(); return; }
+    const rows = await res.json();
+    if (!rows || rows.length === 0) { localStorage.removeItem('inly_aluno'); mostrarLogin(); return; }
+    const aluno = rows[0];
+
+    // ── VERIFICAR BLOQUEIO ──
+    if (aluno.ativo === false) {
+      localStorage.removeItem('inly_aluno');
+      mostrarLogin();
+      // Mostrar mensagem após pequeno delay para o DOM estar pronto
+      setTimeout(() => {
+        const errEl = document.getElementById('login-error');
+        if (errEl) {
+          errEl.innerHTML = '🔴 Acesso suspenso.<br><span style="font-size:13px;opacity:0.7">Entre em contato com a escola para reativar.</span>';
+          errEl.classList.add('visible');
+        }
+      }, 100);
+      return;
+    }
+
+    // ── REGISTRAR IP ──
+    try {
+      const ipRes = await fetch('https://api.ipify.org?format=json');
+      const { ip } = await ipRes.json();
+      const ipPatch = {};
+      if (aluno.ultimo_ip && aluno.ultimo_ip !== ip) ipPatch.ip_anterior = aluno.ultimo_ip;
+      ipPatch.ultimo_ip = ip;
+      await fetch(`${SB_URL}/rest/v1/synaptix_alunos?id=eq.${aluno.id}`, {
+        method: 'PATCH',
+        headers: { ...hdrs, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify(ipPatch)
+      });
+    } catch(e) { console.warn('IP não registrado (restore):', e); }
+
+    alunoLogado = aluno;
+    try { localStorage.setItem('inly_aluno', JSON.stringify(alunoLogado)); } catch {}
+    mostrarApp();
+  } catch(e) {
+    console.warn('Restore session falhou:', e);
+    mostrarLogin();
+  }
 })();
 
 updateFCBadge();
